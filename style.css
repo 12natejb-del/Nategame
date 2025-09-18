@@ -1,0 +1,31 @@
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #eef2f7;
+  margin: 0;
+  padding: 20px;
+}
+
+#gameCanvas {
+  border: 2px solid #333;
+  background: #a3d5f7;
+  display: block;
+  margin: 10px auto;
+}
+
+#question-container {
+  margin-top: 10px;
+}
+
+#answers button {
+  margin: 5px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+#hud {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 5px;
+  font-weight: bold;
+}

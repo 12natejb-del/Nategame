@@ -1,31 +1,30 @@
+
+
 body {
   font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
   text-align: center;
-  background: #eef2f7;
-  margin: 0;
-  padding: 20px;
+  margin: 20px;
 }
 
-#gameCanvas {
-  border: 2px solid #333;
-  background: #a3d5f7;
-  display: block;
-  margin: 10px auto;
-}
-
-#question-container {
-  margin-top: 10px;
+#question-container, #bike-game-container {
+  margin-top: 20px;
 }
 
 #answers button {
   margin: 5px;
-  padding: 8px 12px;
+  padding: 8px 15px;
   cursor: pointer;
 }
 
-#hud {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 5px;
+#score-container {
   font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
 }

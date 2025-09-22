@@ -1,27 +1,225 @@
-<!DOCTYPE html>
-<html lang="en">
+
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz Clash Royale</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <title>Bike + Rosary Quiz</title>
+  <style>
+    body{font-family:Arial,sans-serif;text-align:center;margin:16px}
+    #bikeCanvas{background:#cfe8ff;display:block;margin:0 auto;border:1px solid #000}
+    #groundes{display:block;margin:0 auto;background:#000;height:30px;width:800px;position:relative;top:-30px}
+    #answers button{margin:5px;padding:8px 12px}
+    #start-bike-btn{margin-top:8px;padding:8px 12px}
+  </style>
 </head>
 <body>
-<h1>Quiz Clash Royale</h1>
 
-<div id="hud">
-  <div>Score: <span id="score">0</span></div>
-</div>
+<h1>Bike + Rosary Quiz Game</h1>
 
-<canvas id="gameCanvas" width="800" height="400"></canvas>
+<canvas id="bikeCanvas" width="800" height="300"></canvas>
+<div id="groundes"></div>
+<p>W = Jump, A/D = Move</p>
+<button id="start-bike-btn">Start Level</button>
+<p>Current Level: <span id="level-num">1</span></p>
 
-<div id="question-container">
-  <p id="question"></p>
-  <div id="answers"></div>
-</div>
+<hr>
 
-<button id="start-btn">Start Game</button>
+<p id="question">Complete the bike level to start the quiz!</p>
+<div id="answers"></div>
+<p>Score: <span id="score">0</span></p>
 
-<script src="script.js"></script>
+<script>
+let scores = 0;
+let spacings = 0;
+let spacingBase = 500;
+const bikeCanvas = document.getElementById("bikeCanvas");
+const bikeCtx = bikeCanvas.getContext("2d");
+const startBikeBtn = document.getElementById("start-bike-btn");
+const levelNumEl = document.getElementById("level-num");
+
+let bike = {x:50, y:250, width:40, height:20, vy:0, onGround:true};
+let obstacles = [];
+let bikeGameRunning = false;
+let currentLevel = 1;
+const totalLevels = 20;
+
+const questionEl = document.getElementById("question");
+const answersEl = document.getElementById("answers");
+const scoreEl = document.getElementById("score");
+
+let score = 0;
+let currentQuestionIndex = 0;
+let quizQuestions = [];
+
+const questions = [
+  {q:"Which is the first Joyful Mystery?", a:["The Annunciation","The Visitation","The Nativity","The Finding in the Temple"], correct:"The Annunciation"},
+  {q:"Who visited Mary in the Annunciation?", a:["Angel Gabriel","Elizabeth","Joseph","Jesus"], correct:"Angel Gabriel"},
+  {q:"Which mystery is when Mary visits Elizabeth?", a:["Visitation","Annunciation","Nativity","Finding in Temple"], correct:"Visitation"},
+  {q:"Which mystery celebrates Jesus' birth?", a:["Nativity","Annunciation","Visitation","Presentation"], correct:"Nativity"},
+  {q:"When Jesus was presented in the temple, which mystery is this?", a:["Presentation","Annunciation","Finding in Temple","Nativity"], correct:"Presentation"},
+  {q:"In which mystery do we find Jesus in the temple teaching?", a:["Finding in the Temple","Nativity","Presentation","Visitation"], correct:"Finding in the Temple"},
+  {q:"How many Joyful Mysteries are there?", a:["5","3","4","6"], correct:"5"},
+  {q:"On which day are Joyful Mysteries usually prayed?", a:["Monday and Saturday","Tuesday","Wednesday","Friday"], correct:"Monday and Saturday"},
+  {q:"What do we meditate on in the Annunciation?", a:["Mary's yes to God","Birth of Jesus","Jesus teaching","Mary visits Elizabeth"], correct:"Mary's yes to God"},
+  {q:"Who recognized Jesus in the Presentation?", a:["Simeon","Joseph","Mary","Angel Gabriel"], correct:"Simeon"},
+  {q:"Elizabeth said Mary was blessed in which mystery?", a:["Visitation","Annunciation","Nativity","Finding in Temple"], correct:"Visitation"},
+  {q:"The Nativity takes place in which town?", a:["Bethlehem","Nazareth","Jerusalem","Capernaum"], correct:"Bethlehem"}
+];
+
+function level1(){ return {gravity:0.5, speed:4, obstacleCount:6, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 600}; }
+function level2(){ return {gravity:0.5, speed:3, obstacleCount:5, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 600}; }
+function level3(){ return {gravity:0.5, speed:3.3, obstacleCount:7, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 590}; }
+function level4(){ return {gravity:0.3, speed:3.7, obstacleCount:8, obstacleWidth:1.2, obstacleHeight:50, levelLength:1.0, spacing: 587}; }
+function level5(){ return {gravity:0.7, speed:7, obstacleCount:9, obstacleWidth:20, obstacleHeight:30, levelLength:1.0, spacing: 587}; }
+function level6(){ return {gravity:0.4, speed:4.2, obstacleCount:10, obstacleWidth:17, obstacleHeight:30, levelLength:1.0, spacing: 570}; }
+function level7(){ return {gravity:0.5, speed:4, obstacleCount:11, obstacleWidth:10, obstacleHeight:80, levelLength:1.0, spacing: 599}; }
+function level8(){ return {gravity:0.5, speed:5, obstacleCount:15, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 600}; }
+function level9(){ return {gravity:0.4, speed:7, obstacleCount:15, obstacleWidth:150, obstacleHeight:30, levelLength:1.0, spacing: 600}; }
+function level10(){ return {gravity:0.5, speed:5, obstacleCount:15, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 499}; }
+function level11(){ return {gravity:0.5, speed:4.9, obstacleCount:15, obstacleWidth:15, obstacleHeight:40, levelLength:1.0, spacing: 515}; }
+function level12(){ return {gravity:0.5, speed:4, obstacleCount:6, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 200}; }
+function level13(){ return {gravity:0.5, speed:4, obstacleCount:6, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 200}; }
+function level14(){ return {gravity:0.5, speed:4, obstacleCount:6, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 200}; }
+function level15(){ return {gravity:0.5, speed:4, obstacleCount:6, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 200}; }
+function level16(){ return {gravity:0.5, speed:4, obstacleCount:6, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 200}; }
+function level17(){ return {gravity:0.5, speed:4, obstacleCount:6, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 200}; }
+function level18(){ return {gravity:0.5, speed:4, obstacleCount:6, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 200}; }
+function level19(){ return {gravity:0.5, speed:4, obstacleCount:6, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 200}; }
+function level20(){ return {gravity:0.5, speed:4, obstacleCount:6, obstacleWidth:10, obstacleHeight:30, levelLength:1.0, spacing: 200}; }
+
+const levels = [
+  level1,level2,level3,level4,level5,
+  level6,level7,level8,level9,level10,
+  level11,level12,level13,level14,level15,
+  level16,level17,level18,level19,level20
+];
+
+function shuffle(array){ return array.sort(()=>Math.random()-0.5); }
+
+startBikeBtn.onclick = () => {
+  startBikeBtn.disabled = true;
+  bikeGameRunning = true;
+  bike.x = 50; bike.y = 250; bike.vy = 0; bike.onGround = true;
+  obstacles = [];
+  spawnObstacles(currentLevel);
+  levelNumEl.textContent = currentLevel;
+  requestAnimationFrame(updateBikeGame);
+};
+
+document.addEventListener("keydown", e => {
+  if(!bikeGameRunning) return;
+  if(e.code === "KeyW" && bike.onGround){ bike.vy = -12; bike.onGround = false; }
+  if(e.code === "KeyA") bike.x -=5;
+  if(e.code === "KeyD") bike.x +=5;
+});
+
+function spawnObstacles(level){
+  const settings = levels[level-1]();
+  obstacles = [];
+  const raw = (typeof settings.spacing === "number") ? settings.spacing : Math.floor(spacingBase * settings.levelLength);
+  const spacing = Math.max(20, Math.floor(raw));
+  for(let i=1;i<=settings.obstacleCount;i++){
+    const jitter = Math.random() * Math.min(120, Math.floor(spacing * 0.4));
+    const startX = bikeCanvas.width + i * spacing + jitter;
+    const obsY = 270 - settings.obstacleHeight + 10;
+    obstacles.push({ x: startX, y: obsY, width: settings.obstacleWidth, height: settings.obstacleHeight });
+  }
+}
+
+function updateBikeGame(){
+  if(!bikeGameRunning) return;
+  const settings = levels[currentLevel-1]();
+  bike.vy += settings.gravity;
+  bike.y += bike.vy;
+  if(bike.y >= 250){ bike.y = 250; bike.vy = 0; bike.onGround = true; }
+  bikeCtx.clearRect(0,0,bikeCanvas.width,bikeCanvas.height);
+  bikeCtx.fillStyle = "blue";
+  bikeCtx.fillRect(bike.x, bike.y, bike.width, bike.height);
+  bikeCtx.fillStyle = "red";
+  let finished = true;
+  obstacles.forEach(obs => {
+    obs.x -= settings.speed;
+    bikeCtx.fillRect(obs.x, obs.y, obs.width, obs.height);
+    if(bike.x < obs.x + obs.width && bike.x + bike.width > obs.x &&
+       bike.y < obs.y + obs.height && bike.y + bike.height > obs.y){
+      bikeGameOver(false);
+    }
+    if(obs.x + obs.width > 0) finished = false;
+  });
+  if(bike.x > bikeCanvas.width - 50) finished = true;
+  if(finished) bikeGameOver(true);
+  if(bikeGameRunning) requestAnimationFrame(updateBikeGame);
+}
+
+function bikeGameOver(success){
+  bikeGameRunning = false;
+  startBikeBtn.disabled = false;
+  if(success){
+    alert("Level Complete! Answer 10 Rosary questions.");
+    startNextQuizSet();
+  } else {
+    alert("You crashed! Try again.");
+  }
+}
+
+function startNextQuizSet(){
+  quizQuestions = shuffle(questions).slice(0,1);
+  currentQuestionIndex = 0;
+  score = 0;
+  scoreEl.textContent = score;
+  questionEl.textContent = "";
+  answersEl.innerHTML = "";
+  showQuestion();
+}
+
+function showQuestion(){
+  if(currentQuestionIndex >= quizQuestions.length){
+    if(score >= 1){
+      alert("Quiz complete! Unlocking next bike level.");
+      currentLevel++;
+      if(currentLevel > totalLevels){
+        questionEl.textContent = `🎉 All 20 levels completed! Final score: ${score}`;
+        answersEl.innerHTML = "";
+        startBikeBtn.style.display = "none";
+        return;
+      }
+      questionEl.textContent = "Get ready for next bike level!";
+      answersEl.innerHTML = "";
+      startBikeBtn.style.display = "inline";
+      return;
+    } else {
+      alert("You need at least 8 correct! Restarting quiz...");
+      startNextQuizSet();
+      return;
+    }
+  }
+  const q = quizQuestions[currentQuestionIndex];
+  questionEl.textContent = q.q;
+  answersEl.innerHTML = "";
+  const shuffledAnswers = shuffle([...q.a]);
+  shuffledAnswers.forEach(ans => {
+    const btn = document.createElement("button");
+    btn.textContent = ans;
+    btn.onclick = () => {
+      if(ans === q.correct){
+        score++;
+        scoreEl.textContent = score;
+        currentQuestionIndex++;
+        showQuestion();
+      } else {
+        questionEl.textContent += ` ❌ Correct: ${q.correct}`;
+        setTimeout(() => {
+          currentQuestionIndex++;
+          showQuestion();
+        }, 2000);
+      }
+    };
+    answersEl.appendChild(btn);
+  });
+}
+
+startBikeBtn.style.display = "none";
+startNextQuizSet();
+</script>
+
 </body>
 </html>
